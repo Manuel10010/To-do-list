@@ -156,29 +156,45 @@ tk.OptionMenu(
     command=color_texto,
 ).place(x=250, y=10)
 
+
+
 tk.Button(ventana, text="Añadir", command=agregar, bg="lightblue", width=12).place(
     x=350, y=50
 )
+
+
+
 tk.Button(ventana, text="Borrar", command=borrar, bg="lightblue", width=12).place(
     x=350, y=90
 )
+
+
+
 tk.Button(
     ventana, text="Borrar todo", command=borrar_todo, bg="lightblue", width=12
 ).place(x=350, y=130)
 
+
+
+
 tk.Button(
     ventana, text="☀️ Modo Claro", command=modo_claro, bg="#333333", fg="white"
 ).place(x=10, y=550)
+
+
+
 tk.Button(
     ventana, text="🌙 Modo Oscuro", command=modo_oscuro, bg="#333333", fg="white"
 ).place(x=120, y=550)
 
+
+
+
 label_resultado = tk.Label(
-    ventana, text="Tareas: ", font=("Arial", 12, "bold"), fg="black", bg="#f4f4f9"
-)
+    ventana, text="Tareas: ", font=("Arial", 12, "bold"), fg="black", bg="#f4f4f9")
 label_resultado.place(x=10, y=210)
 
-lista = tk.Listbox(ventana, width=80, height=15)
+lista = tk.Listbox(ventana, width=40, height=8)
 lista.place(x=10, y=240)
 
 # Cargar las tareas al inicio
