@@ -1,0 +1,187 @@
+import json
+import os
+import tkinter as tk
+from tkinter import messagebox, ttk
+
+# Archivo donde se guardarán las tareas
+ARCHIVO_DATOS = "tareas.json"
+
+color_seleccionado_actual = "black"
+
+
+# 💾 FUNCIÓN PARA GUARDAR DATOS EN EL ARCHIVO
+def guardar_tareas():
+    datos = []
+    for i in range(lista.size()):
+        texto = lista.get(i)
+        # Obtenemos el color individual de cada tarea en el Listbox
+        color = lista.itemcget(i, "fg")
+        datos.append({"texto": texto, "color": color})
+
+    with open(ARCHIVO_DATOS, "w", encoding="utf-8") as f:
+        json.dump(datos, f, ensure_ascii=False, indent=4)
+
+
+# 📂 FUNCIÓN PARA CARGAR DATOS AL ABRIR LA APP
+def cargar_tareas():
+    if os.path.exists(ARCHIVO_DATOS):
+        with open(ARCHIVO_DATOS, "r", encoding="utf-8") as f:
+            try:
+                datos = json.load(f)
+                for item in datos:
+                    lista.insert(tk.END, item["texto"])
+                    lista.itemconfig(tk.END, fg=item["color"])
+            except Exception:
+                pass  # Si el archivo está corrupto o vacío, continua normalmente
+
+
+def color_texto(seleccion=None):
+    global color_seleccionado_actual
+    colores = {
+        "negro": "black",
+        "verde": "green",
+        "azul": "blue",
+        "rojo": "red",
+        "amarillo": "gold",
+        "gris": "grey",
+    }
+
+    cl = var_color.get()
+    color_elegido = colores.get(cl)
+
+    if color_elegido:
+        color_seleccionado_actual = color_elegido
+        label_resultado.config(
+            text=f"Color seleccionado: {cl}", fg=color_elegido
+        )
+    else:
+        messagebox.showerror("Error", "Color no válido")
+
+
+def agregar():
+    global color_seleccionado_actual
+    texto = entry_a.get("1.0", tk.END).strip()
+    if texto:
+        lista.insert(tk.END, texto)
+        lista.itemconfig(tk.END, fg=color_seleccionado_actual)
+
+        label_resultado.config(text="Se añadió la tarea", fg="black")
+        entry_a.delete("1.0", tk.END)
+
+        # Auto-guardar tras añadir
+        guardar_tareas()
+    else:
+        messagebox.showerror("Error", "No hay nada que añadir")
+
+
+def borrar():
+    indice = lista.curselection()
+    if indice:
+        lista.delete(indice[0])
+        label_resultado.config(text="Se borró la tarea", fg="black")
+
+        # Auto-guardar tras borrar
+        guardar_tareas()
+    else:
+        messagebox.showerror("Error", "Seleccione un elemento para borrar")
+
+
+def borrar_todo():
+    if lista.size() == 0:
+        messagebox.showerror("Error", "La lista está vacía")
+    else:
+        lista.delete(0, tk.END)
+        label_resultado.config(text="Se borraron todas las tareas", fg="black")
+
+        # Auto-guardar tras borrar todo
+        guardar_tareas()
+
+
+# MODO OSCURO / CLARO FUNCIONES:
+es_oscuro = False
+
+
+def modo_oscuro():
+    global es_oscuro
+    ventana.config(bg="#222222")
+    label_titulo.config(bg="#222222", fg="#ffffff")
+    label_resultado.config(bg="#222222", fg="#ffffff")
+    lista.config(bg="#333333", selectbackground="#555555")
+    entry_a.config(bg="#333333", fg="white", insertbackground="white")
+    es_oscuro = True
+
+
+def modo_claro():
+    global es_oscuro
+    ventana.config(bg="#f4f4f9")
+    label_titulo.config(bg="#f4f4f9", fg="black")
+    label_resultado.config(bg="#f4f4f9", fg="black")
+    lista.config(bg="white", selectbackground="#a6b9cd")
+    entry_a.config(bg="white", fg="black", insertbackground="black")
+    es_oscuro = False
+
+
+def al_cerrar():
+    guardar_tareas()
+    ventana.destroy()
+
+
+# Configuración de la ventana principal
+ventana = tk.Tk()
+ventana.title("Lista de quehaceres")
+ventana.geometry("600x600")
+ventana.config(bg="#f4f4f9")
+
+# Guardar automáticamente al cerrar la ventana
+ventana.protocol("WM_DELETE_WINDOW", al_cerrar)
+
+label_titulo = tk.Label(
+    ventana, text="Ingrese el texto que quieres añadir:", bg="#f4f4f9"
+)
+label_titulo.place(x=10, y=14)
+
+entry_a = tk.Text(ventana, width=40, height=8)
+entry_a.place(x=10, y=50)
+
+var_color = tk.StringVar(value="COLORES")
+tk.OptionMenu(
+    ventana,
+    var_color,
+    "negro",
+    "verde",
+    "azul",
+    "rojo",
+    "amarillo",
+    "gris",
+    command=color_texto,
+).place(x=250, y=10)
+
+tk.Button(ventana, text="Añadir", command=agregar, bg="lightblue", width=12).place(
+    x=350, y=50
+)
+tk.Button(ventana, text="Borrar", command=borrar, bg="lightblue", width=12).place(
+    x=350, y=90
+)
+tk.Button(
+    ventana, text="Borrar todo", command=borrar_todo, bg="lightblue", width=12
+).place(x=350, y=130)
+
+tk.Button(
+    ventana, text="☀️ Modo Claro", command=modo_claro, bg="#333333", fg="white"
+).place(x=10, y=550)
+tk.Button(
+    ventana, text="🌙 Modo Oscuro", command=modo_oscuro, bg="#333333", fg="white"
+).place(x=120, y=550)
+
+label_resultado = tk.Label(
+    ventana, text="Tareas: ", font=("Arial", 12, "bold"), fg="black", bg="#f4f4f9"
+)
+label_resultado.place(x=10, y=210)
+
+lista = tk.Listbox(ventana, width=80, height=15)
+lista.place(x=10, y=240)
+
+# Cargar las tareas al inicio
+cargar_tareas()
+
+ventana.mainloop()
