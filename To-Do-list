@@ -2,35 +2,33 @@ import json
 import os
 import tkinter as tk
 from tkinter import messagebox, ttk
+from datetime import datetime
 
 # Archivo donde se guardarán las tareas
 ARCHIVO_DATOS = "tareas.json"
 
 color_seleccionado_actual = "black"
 
+# 🧠 Lista maestra global para el Camino B
+mis_tareas = []
+
 
 # 💾 FUNCIÓN PARA GUARDAR DATOS EN EL ARCHIVO
 def guardar_tareas():
-    datos = []
-    for i in range(lista.size()):
-        texto = lista.get(i)
-        # Obtenemos el color individual de cada tarea en el Listbox
-        color = lista.itemcget(i, "fg")
-        datos.append({"texto": texto, "color": color})
-
     with open(ARCHIVO_DATOS, "w", encoding="utf-8") as f:
-        json.dump(datos, f, ensure_ascii=False, indent=4)
+        json.dump(mis_tareas, f, ensure_ascii=False, indent=4)
 
 
 # 📂 FUNCIÓN PARA CARGAR DATOS AL ABRIR LA APP
 def cargar_tareas():
+    global mis_tareas
     if os.path.exists(ARCHIVO_DATOS):
         with open(ARCHIVO_DATOS, "r", encoding="utf-8") as f:
             try:
-                datos = json.load(f)
-                for item in datos:
+                mis_tareas = json.load(f)
+                for item in mis_tareas:
                     lista.insert(tk.END, item["texto"])
-                    lista.itemconfig(tk.END, fg=item["color"])
+                    lista.itemconfig(tk.END, fg=item.get("color", "black"))
             except Exception:
                 pass  # Si el archivo está corrupto o vacío, continua normalmente
 
@@ -38,12 +36,12 @@ def cargar_tareas():
 def color_texto(seleccion=None):
     global color_seleccionado_actual
     colores = {
-        "negro": "black",
+        "negro": "black",  # Color negro
         "verde": "green",
         "azul": "blue",
         "rojo": "red",
-        "amarillo": "gold",
-        "gris": "grey",
+        "amarillo": "yellow",
+        "gris": "gray",
     }
 
     cl = var_color.get()
@@ -59,11 +57,21 @@ def color_texto(seleccion=None):
 
 
 def agregar():
-    global color_seleccionado_actual
+    global color_seleccionado_actual, mis_tareas
     texto = entry_a.get("1.0", tk.END).strip()
     if texto:
+        # 📅 Obtenemos la fecha y hora actual exacta
+        fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M")
+
         lista.insert(tk.END, texto)
         lista.itemconfig(tk.END, fg=color_seleccionado_actual)
+
+        # Guardamos el paquete de datos en la lista maestra
+        mis_tareas.append({
+            "texto": texto,
+            "color": color_seleccionado_actual,
+            "fecha": fecha_actual
+        })
 
         label_resultado.config(text="Se añadió la tarea", fg="black")
         entry_a.delete("1.0", tk.END)
@@ -75,9 +83,12 @@ def agregar():
 
 
 def borrar():
+    global mis_tareas
     indice = lista.curselection()
     if indice:
-        lista.delete(indice[0])
+        idx = indice[0]
+        lista.delete(idx)
+        mis_tareas.pop(idx)  # Borramos también de la lista maestra
         label_resultado.config(text="Se borró la tarea", fg="black")
 
         # Auto-guardar tras borrar
@@ -87,10 +98,12 @@ def borrar():
 
 
 def borrar_todo():
+    global mis_tareas
     if lista.size() == 0:
         messagebox.showerror("Error", "La lista está vacía")
     else:
         lista.delete(0, tk.END)
+        mis_tareas = []  # Vaciamos la lista maestra
         label_resultado.config(text="Se borraron todas las tareas", fg="black")
 
         # Auto-guardar tras borrar todo
@@ -121,83 +134,91 @@ def modo_claro():
     es_oscuro = False
 
 
+def informacion_tarea():
+    indice = lista.curselection()
+    if indice:
+        idx = indice[0]
+        tarea = mis_tareas[idx]
+
+        texto = tarea.get("texto", "Sin texto")
+        color = tarea.get("color", "Sin color")
+        fecha = tarea.get("fecha", "Sin fecha")
+
+        messagebox.showinfo("Información de la tarea", f"📝 Texto: {texto}\n🎨 Color: {color}\n📅 Fecha: {fecha}")
+    else:
+        messagebox.showerror("Error", "Seleccione un elemento para ver la información")
+    
+    
+
+
 def al_cerrar():
     guardar_tareas()
     ventana.destroy()
 
 
-# Configuración de la ventana principal
+
+
+#==============================================================================================================#
+#  Configuración de la ventana principal
 ventana = tk.Tk()
 ventana.title("Lista de quehaceres")
 ventana.geometry("600x600")
 ventana.config(bg="#f4f4f9")
 
+
+#==============================================================================================================#
 # Guardar automáticamente al cerrar la ventana
 ventana.protocol("WM_DELETE_WINDOW", al_cerrar)
 
-label_titulo = tk.Label(
-    ventana, text="Ingrese el texto que quieres añadir:", bg="#f4f4f9"
-)
+
+#==============================================================================================================#
+#TITULO DE LA APP
+label_titulo = tk.Label(ventana, text="Ingrese el texto que quieres añadir:", bg="#f4f4f9")
 label_titulo.place(x=10, y=14)
 
+
+#==============================================================================================================#
+#INFORMACION DONDE SE INGRESA LA TAREA
 entry_a = tk.Text(ventana, width=40, height=8)
 entry_a.place(x=10, y=50)
 
+#==============================================================================================================#
+#COLOR DE LA TAREA
 var_color = tk.StringVar(value="COLORES")
-tk.OptionMenu(
-    ventana,
-    var_color,
-    "negro",
-    "verde",
-    "azul",
-    "rojo",
-    "amarillo",
-    "gris",
-    command=color_texto,
-).place(x=250, y=10)
+tk.OptionMenu(ventana,var_color,"negro","verde","azul","rojo","amarillo","gris",command=color_texto,).place(x=250, y=10)
 
+#==============================================================================================================#
+#BOTONES DE LA APP (AÑADIR, BORRAR, BORRAR TODO))
+tk.Button(ventana, text="Añadir", command=agregar, bg="lightblue", width=12).place(x=350, y=50)
 
+tk.Button(ventana, text="Borrar", command=borrar, bg="lightblue", width=12).place( x=350, y=90)
 
-tk.Button(ventana, text="Añadir", command=agregar, bg="lightblue", width=12).place(
-    x=350, y=50
-)
+tk.Button(ventana, text="Borrar todo", command=borrar_todo, bg="lightblue", width=12).place(x=350, y=130)
+#==============================================================================================================#
 
+#BOTONES DE MODO CLARO Y OSCURO
+tk.Button(ventana, text="☀️ Modo Claro", command=modo_claro, bg="#333333", fg="white").place(x=10, y=550)
 
+tk.Button(ventana, text="🌙 Modo Oscuro", command=modo_oscuro, bg="#333333", fg="white").place(x=120, y=550)
 
-tk.Button(ventana, text="Borrar", command=borrar, bg="lightblue", width=12).place(
-    x=350, y=90
-)
-
-
-
-tk.Button(
-    ventana, text="Borrar todo", command=borrar_todo, bg="lightblue", width=12
-).place(x=350, y=130)
-
-
-
-
-tk.Button(
-    ventana, text="☀️ Modo Claro", command=modo_claro, bg="#333333", fg="white"
-).place(x=10, y=550)
-
-
-
-tk.Button(
-    ventana, text="🌙 Modo Oscuro", command=modo_oscuro, bg="#333333", fg="white"
-).place(x=120, y=550)
-
-
-
-
-label_resultado = tk.Label(
-    ventana, text="Tareas: ", font=("Arial", 12, "bold"), fg="black", bg="#f4f4f9")
+#==============================================================================================================#
+#MOSTRA LA TAREA DE RESULTADO
+label_resultado = tk.Label(ventana, text="Tareas: ", font=("Arial", 12, "bold"), fg="black", bg="#f4f4f9")
 label_resultado.place(x=10, y=210)
 
-lista = tk.Listbox(ventana, width=40, height=8)
+
+#==============================================================================================================#
+#LISTA DE TAREAS
+lista = tk.Listbox(ventana, width=70, height=15)
 lista.place(x=10, y=240)
 
+#==============================================================================================================#
+#Mosttar boton para ver información de la tarea
+tk.Button(ventana, text="Ver información", command=informacion_tarea, bg="lightblue", width=12).place(x=440, y=240)
+#==============================================================================================================#
 # Cargar las tareas al inicio
 cargar_tareas()
 
+
+#==============================================================================================================#
 ventana.mainloop()
