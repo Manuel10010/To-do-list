@@ -1,13 +1,14 @@
-import json
-import os
-import tkinter as tk
-from tkinter import messagebox, ttk
-from datetime import datetime
+import json # Para guardar y cargar datos
+import os # Para comprobar si existe un archivo
+import tkinter as tk # Para crear la interfaz
+from tkinter import messagebox, ttk # Para mostrar mensajes
+from datetime import datetime # Para obtener la fecha y hora
+
 
 # Archivo donde se guardarán las tareas
-ARCHIVO_DATOS = "tareas.json"
+ARCHIVO_DATOS = "tareas.json" # Nombre del archivo donde se guardarán las tareas
 
-color_seleccionado_actual = "black"
+color_seleccionado_actual = "black" # Color por defecto
 
 # 🧠 Lista maestra global para el Camino B
 mis_tareas = []
@@ -33,6 +34,7 @@ def cargar_tareas():
                 pass  # Si el archivo está corrupto o vacío, continua normalmente
 
 
+# 🎨 FUNCIÓN PARA EL CAMBIO DEL COLOR DE LA TAREA
 def color_texto(seleccion=None):
     global color_seleccionado_actual
     colores = {
@@ -56,6 +58,33 @@ def color_texto(seleccion=None):
         messagebox.showerror("Error", "Color no válido")
 
 
+# Variable global para guardar la prioridad actual
+prioridad_seleccionada_actual = "Media"
+
+
+def seleccionar_prioridad(seleccion=None):
+    global prioridad_seleccionada_actual
+    niveles = {
+        "Baja": "Baja",
+        "Media": "Media",
+        "Alta": "Alta",
+    }
+
+    cl = var_prioridad.get()
+    prioridad_elegida = niveles.get(cl)
+
+    if prioridad_elegida:
+        prioridad_seleccionada_actual = prioridad_elegida
+        label_resultado.config(
+            text=f"Prioridad seleccionada: {cl}", fg="black"
+        )
+    else:
+        messagebox.showerror("Error", "Nivel de prioridad no válido")
+
+
+
+
+# 📝 FUNCIÓN PARA AÑADIR UNA TAREA
 def agregar():
     global color_seleccionado_actual, mis_tareas
     texto = entry_a.get("1.0", tk.END).strip()
@@ -70,7 +99,8 @@ def agregar():
         mis_tareas.append({
             "texto": texto,
             "color": color_seleccionado_actual,
-            "fecha": fecha_actual
+            "fecha": fecha_actual,
+            "prioridad": prioridad_seleccionada_actual
         })
 
         label_resultado.config(text="Se añadió la tarea", fg="black")
@@ -82,6 +112,7 @@ def agregar():
         messagebox.showerror("Error", "No hay nada que añadir")
 
 
+# 🗑️ FUNCIÓN PARA BORRAR UNA TAREA
 def borrar():
     global mis_tareas
     indice = lista.curselection()
@@ -97,6 +128,7 @@ def borrar():
         messagebox.showerror("Error", "Seleccione un elemento para borrar")
 
 
+# 🗑️ FUNCIÓN PARA BORRAR TODAS LAS TAREAS
 def borrar_todo():
     global mis_tareas
     if lista.size() == 0:
@@ -109,7 +141,7 @@ def borrar_todo():
         # Auto-guardar tras borrar todo
         guardar_tareas()
 
-
+#==============================================================================================================#
 # MODO OSCURO / CLARO FUNCIONES:
 es_oscuro = False
 
@@ -132,8 +164,10 @@ def modo_claro():
     lista.config(bg="white", selectbackground="#a6b9cd")
     entry_a.config(bg="white", fg="black", insertbackground="black")
     es_oscuro = False
+#==============================================================================================================#
 
 
+#FUNCIÓN PARA MOSTRAR LA INFORMACIÓN DE LA TAREA
 def informacion_tarea():
     indice = lista.curselection()
     if indice:
@@ -143,14 +177,15 @@ def informacion_tarea():
         texto = tarea.get("texto", "Sin texto")
         color = tarea.get("color", "Sin color")
         fecha = tarea.get("fecha", "Sin fecha")
+        prioridad = tarea.get("prioridad", "Sin prioridad")
 
-        messagebox.showinfo("Información de la tarea", f"📝 Texto: {texto}\n🎨 Color: {color}\n📅 Fecha: {fecha}")
+        messagebox.showinfo("Información de la tarea", f"📝 Texto: {texto}\n🎨 Color: {color}\n📅 Fecha: {fecha}\n⭐ Prioridad: {prioridad}")
     else:
         messagebox.showerror("Error", "Seleccione un elemento para ver la información")
     
     
 
-
+# Función para cerrar la ventana
 def al_cerrar():
     guardar_tareas()
     ventana.destroy()
@@ -188,12 +223,18 @@ var_color = tk.StringVar(value="COLORES")
 tk.OptionMenu(ventana,var_color,"negro","verde","azul","rojo","amarillo","gris",command=color_texto,).place(x=250, y=10)
 
 #==============================================================================================================#
-#BOTONES DE LA APP (AÑADIR, BORRAR, BORRAR TODO))
+#BOTONES DE LA APP (AÑADIR, BORRAR, BORRAR TODO, PRIORIDAD))
 tk.Button(ventana, text="Añadir", command=agregar, bg="lightblue", width=12).place(x=350, y=50)
 
 tk.Button(ventana, text="Borrar", command=borrar, bg="lightblue", width=12).place( x=350, y=90)
 
 tk.Button(ventana, text="Borrar todo", command=borrar_todo, bg="lightblue", width=12).place(x=350, y=130)
+
+
+#==============================================================================================================#
+#BOTON DE NIVEL DE PRIORIDAD
+var_prioridad = tk.StringVar(value="PRIORIDAD")
+tk.OptionMenu(ventana,var_prioridad,"Baja","Media","Alta",command=seleccionar_prioridad,).place(x=350, y=170)
 #==============================================================================================================#
 
 #BOTONES DE MODO CLARO Y OSCURO
@@ -216,6 +257,8 @@ lista.place(x=10, y=240)
 #Mosttar boton para ver información de la tarea
 tk.Button(ventana, text="Ver información", command=informacion_tarea, bg="lightblue", width=12).place(x=440, y=240)
 #==============================================================================================================#
+
+
 # Cargar las tareas al inicio
 cargar_tareas()
 
