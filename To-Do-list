@@ -31,7 +31,10 @@ def cargar_tareas():
                 mis_tareas = json.load(f)
                 for item in mis_tareas:
                     lista.insert(tk.END, item["texto"])
-                    lista.itemconfig(tk.END, fg=item.get("color", "black"))
+                    if item.get("completada", False):
+                        lista.itemconfig(tk.END, fg="gray")
+                    else:
+                        lista.itemconfig(tk.END, fg=item.get("color", "black"))
             except Exception:
                 pass  # Si el archivo está corrupto o vacío, continua normalmente
 
@@ -97,12 +100,13 @@ def agregar():
         lista.insert(tk.END, texto)
         lista.itemconfig(tk.END, fg=color_seleccionado_actual)
 
-        # Guardamos el paquete de datos en la lista maestra
+        # Guardamos el paquete de datos en la lista maestra incluyendo "completada"
         mis_tareas.append({
             "texto": texto,
             "color": color_seleccionado_actual,
             "fecha": fecha_actual,
-            "prioridad": prioridad_seleccionada_actual
+            "prioridad": prioridad_seleccionada_actual,
+            "completada": False
         })
 
         label_resultado.config(text="Se añadió la tarea", fg="black")
@@ -180,13 +184,18 @@ def informacion_tarea():
         color = tarea.get("color", "Sin color")
         fecha = tarea.get("fecha", "Sin fecha")
         prioridad = tarea.get("prioridad", "Sin prioridad")
+        
+        estado_texto = "Sí ✅ (Completada)" if tarea.get("completada", False) else "No ❌ (En progreso)"
 
-        messagebox.showinfo("Información de la tarea", f"📝 Texto: {texto}\n🎨 Color: {color}\n📅 Fecha: {fecha}\n⭐ Prioridad: {prioridad}")
+        messagebox.showinfo(
+            "Información de la tarea", 
+            f"📝 Texto: {texto}\n🎨 Color: {color}\n📅 Fecha: {fecha}\n⭐ Prioridad: {prioridad}\n✨ Completada: {estado_texto}"
+        )
     else:
         messagebox.showerror("Error", "Seleccione un elemento para ver la información")
 
 
-# Función para mostrar el estado de la tarea
+# Función para mostrar y cambiar el estado de la tarea (Doble clic o botón)
 def Estado_Tarea(event=None):
     global mis_tareas
     indice = lista.curselection()
@@ -194,18 +203,23 @@ def Estado_Tarea(event=None):
         idx = indice[0]
         tarea = mis_tareas[idx]
 
+        # Invertimos el estado actual
+        estado_actual = tarea.get("completada", False)
+        nuevo_estado = not estado_actual
+        tarea['completada'] = nuevo_estado
 
-        estado_seleccionado_actual = tarea.get("completada" , False)
-        tarea['completada'] = not estado_seleccionado_actual
-
-        if estado_seleccionado_actual:
-            lista.itemconfig(idx, fg="green")
-            label_resultado.config(text="Tarea completada", fg="green")
+        if nuevo_estado:
+            lista.itemconfig(idx, fg="gray")
+            label_resultado.config(text="¡Tarea completada!", fg="green")
+            messagebox.showinfo("Estado de la tarea", "Tarea completada ✅")
         else:
-            lista.itemconfig(idx, fg="red")
+            color_original = tarea.get("color", "black")
+            lista.itemconfig(idx, fg=color_original)
             label_resultado.config(text="Tarea en progreso", fg="red")
-            messagebox.showinfo("Estado de la tarea", "Tarea en progreso")
+            messagebox.showinfo("Estado de la tarea", "Tarea en progreso ⏳")
 
+        # Guardamos los cambios automáticamente
+        guardar_tareas()
     else:
         messagebox.showerror("Error", "Seleccione un elemento para ver el estado")
 
@@ -278,6 +292,9 @@ label_resultado.place(x=10, y=210)
 #LISTA DE TAREAS
 lista = tk.Listbox(ventana, width=70, height=15)
 lista.place(x=10, y=240)
+
+# Vinculamos el doble clic directamente a la función Estado_Tarea
+lista.bind("<Double-1>", Estado_Tarea)
 
 #==============================================================================================================#
 #Mosttar boton para ver información de la tarea
