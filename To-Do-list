@@ -149,27 +149,24 @@ def borrar_todo():
 
 #==============================================================================================================#
 # MODO OSCURO / CLARO FUNCIONES:
-es_oscuro = False
+es_oscuro = True
 
-
-def modo_oscuro():
+def modo_oscuro_claro():
     global es_oscuro
-    ventana.config(bg="#222222")
-    label_titulo.config(bg="#222222", fg="#ffffff")
-    label_resultado.config(bg="#222222", fg="#ffffff")
-    lista.config(bg="#333333", selectbackground="#555555")
-    entry_a.config(bg="#333333", fg="white", insertbackground="white")
-    es_oscuro = True
-
-
-def modo_claro():
-    global es_oscuro
-    ventana.config(bg="#f4f4f9")
-    label_titulo.config(bg="#f4f4f9", fg="black")
-    label_resultado.config(bg="#f4f4f9", fg="black")
-    lista.config(bg="white", selectbackground="#a6b9cd")
-    entry_a.config(bg="white", fg="black", insertbackground="black")
-    es_oscuro = False
+    if es_oscuro:
+        ventana.config(bg="#222222")
+        label_titulo.config(bg="#222222", fg="#ffffff")
+        label_resultado.config(bg="#222222", fg="#ffffff")
+        lista.config(bg="#333333", selectbackground="#555555")
+        entry_a.config(bg="#333333", fg="white", insertbackground="white")
+        es_oscuro = False
+    else:
+        ventana.config(bg="#f4f4f9")
+        label_titulo.config(bg="#f4f4f9", fg="black")
+        label_resultado.config(bg="#f4f4f9", fg="black")
+        lista.config(bg="#f4f4f9", selectbackground="#f4f4f9")
+        entry_a.config(bg="#f4f4f9", fg="black", insertbackground="black")
+        es_oscuro = True
 #==============================================================================================================#
 
 
@@ -209,7 +206,7 @@ def Estado_Tarea(event=None):
         tarea['completada'] = nuevo_estado
 
         if nuevo_estado:
-            lista.itemconfig(idx, fg="gray")
+            lista.itemconfig(idx, fg="green")
             label_resultado.config(text="¡Tarea completada!", fg="green")
             messagebox.showinfo("Estado de la tarea", "Tarea completada ✅")
         else:
@@ -223,6 +220,39 @@ def Estado_Tarea(event=None):
     else:
         messagebox.showerror("Error", "Seleccione un elemento para ver el estado")
 
+
+def editar_tarea():
+    global mis_tareas
+    indice = lista.curselection()
+    if indice:
+        idx = indice[0]
+        nuevo_texto = entry_a.get("1.0", tk.END).strip()
+        if nuevo_texto:
+            
+            lista.delete(idx)
+            lista.insert(idx, nuevo_texto)
+
+           
+            mis_tareas[idx]["texto"] = nuevo_texto
+
+           
+            if mis_tareas[idx].get("completada", False):
+                lista.itemconfig(idx, fg="gray")
+            else:
+                color_original = mis_tareas[idx].get("color", "black")
+                lista.itemconfig(idx, fg=color_original)
+
+            
+            lista.selection_set(idx)
+
+
+            entry_a.delete("1.0", tk.END)
+            label_resultado.config(text="Se editó la tarea", fg="black")
+            guardar_tareas()
+        else:
+            messagebox.showerror("Error", "Escribe el nuevo texto para editar")
+    else:
+        messagebox.showerror("Error", "Seleccione un elemento para editar")
         
 
 # Función para cerrar la ventana
@@ -230,9 +260,13 @@ def al_cerrar():
     guardar_tareas()
     ventana.destroy()
 
+###############################################################################################################################
 
+#BOTONES
+#VENTANAS
+#CONTROL DE FUNCIONES
 
-
+###############################################################################################################################
 #==============================================================================================================#
 #  Configuración de la ventana principal
 ventana = tk.Tk()
@@ -278,9 +312,7 @@ tk.OptionMenu(ventana,var_prioridad,"Baja","Media","Alta",command=seleccionar_pr
 #==============================================================================================================#
 
 #BOTONES DE MODO CLARO Y OSCURO
-tk.Button(ventana, text="☀️ Modo Claro", command=modo_claro, bg="#333333", fg="white").place(x=10, y=550)
-
-tk.Button(ventana, text="🌙 Modo Oscuro", command=modo_oscuro, bg="#333333", fg="white").place(x=120, y=550)
+tk.Button(ventana, text="Modo Claro/Oscuro", command=modo_oscuro_claro, bg="#333333", fg="white").place(x=10, y=550)
 
 #==============================================================================================================#
 #MOSTRA LA TAREA DE RESULTADO
@@ -303,6 +335,11 @@ tk.Button(ventana, text="Ver información", command=informacion_tarea, bg="light
 #Mostrar boton para ver el estado de la tarea
 tk.Button(ventana, text="Ver estado", command=Estado_Tarea, bg="lightblue", width=12).place(x=440, y=270)
 #==============================================================================================================#
+#Mostrar boton para editar la tarea
+tk.Button(ventana, text="Editar", command=editar_tarea, bg="lightblue", width=12).place(x=440, y=300)
+#==============================================================================================================#
+
+
 
 # Cargar las tareas al inicio
 cargar_tareas()
