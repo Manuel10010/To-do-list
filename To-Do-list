@@ -10,6 +10,8 @@ ARCHIVO_DATOS = "tareas.json" # Nombre del archivo donde se guardarán las tarea
 
 color_seleccionado_actual = "black" # Color por defecto
 
+estado_seleccionado_actual = "Sin estado"
+
 # 🧠 Lista maestra global para el Camino B
 mis_tareas = []
 
@@ -182,8 +184,32 @@ def informacion_tarea():
         messagebox.showinfo("Información de la tarea", f"📝 Texto: {texto}\n🎨 Color: {color}\n📅 Fecha: {fecha}\n⭐ Prioridad: {prioridad}")
     else:
         messagebox.showerror("Error", "Seleccione un elemento para ver la información")
-    
-    
+
+
+# Función para mostrar el estado de la tarea
+def Estado_Tarea(event=None):
+    global mis_tareas
+    indice = lista.curselection()
+    if indice: 
+        idx = indice[0]
+        tarea = mis_tareas[idx]
+
+
+        estado_seleccionado_actual = tarea.get("completada" , False)
+        tarea['completada'] = not estado_seleccionado_actual
+
+        if estado_seleccionado_actual:
+            lista.itemconfig(idx, fg="green")
+            label_resultado.config(text="Tarea completada", fg="green")
+        else:
+            lista.itemconfig(idx, fg="red")
+            label_resultado.config(text="Tarea en progreso", fg="red")
+            messagebox.showinfo("Estado de la tarea", "Tarea en progreso")
+
+    else:
+        messagebox.showerror("Error", "Seleccione un elemento para ver el estado")
+
+        
 
 # Función para cerrar la ventana
 def al_cerrar():
@@ -257,7 +283,9 @@ lista.place(x=10, y=240)
 #Mosttar boton para ver información de la tarea
 tk.Button(ventana, text="Ver información", command=informacion_tarea, bg="lightblue", width=12).place(x=440, y=240)
 #==============================================================================================================#
-
+#Mostrar boton para ver el estado de la tarea
+tk.Button(ventana, text="Ver estado", command=Estado_Tarea, bg="lightblue", width=12).place(x=440, y=270)
+#==============================================================================================================#
 
 # Cargar las tareas al inicio
 cargar_tareas()
